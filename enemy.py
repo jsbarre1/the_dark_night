@@ -9,7 +9,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, health: int, attack_power: int, name: str, hero_target: pygame.sprite.Sprite) -> None:
         super().__init__()
         # Load and scale the enemy image
-        original_image: pygame.Surface = pygame.image.load("Enemy.png")
+        original_image: pygame.Surface = pygame.image.load("sprites/Enemy.png")
         scaled_size: Tuple[int, int] = (int(original_image.get_width() * SPRITE_SCALE), 
                                       int(original_image.get_height() * SPRITE_SCALE))
         self.image: pygame.Surface = pygame.transform.scale(original_image, scaled_size)

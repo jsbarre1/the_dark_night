@@ -9,7 +9,7 @@ class Hero(pygame.sprite.Sprite):
         super().__init__()
         self.name: str = name
         # Load and scale the hero image
-        original_image: pygame.Surface = pygame.image.load("Hero.png")
+        original_image: pygame.Surface = pygame.image.load("sprites/Hero.png")
         scaled_size: Tuple[int, int] = (int(original_image.get_width() * SPRITE_SCALE), 
                                       int(original_image.get_height() * SPRITE_SCALE))
         self.image: pygame.Surface = pygame.transform.scale(original_image, scaled_size)
