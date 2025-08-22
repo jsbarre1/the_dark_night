@@ -15,17 +15,8 @@ class Enemy(pygame.sprite.Sprite):
         self.image: pygame.Surface = pygame.transform.scale(original_image, scaled_size)
         self.rect: pygame.Rect = self.image.get_rect()
         
-        # Get current display surface dimensions for proper positioning
-        current_surface: pygame.Surface | None = pygame.display.get_surface()
-        if current_surface:
-            current_width = current_surface.get_width()
-            current_height = current_surface.get_height()
-        else:
-            # Fallback to config values if no surface available
-            current_width = SCREEN_WIDTH
-            current_height = SCREEN_HEIGHT
-            
-        self.rect.center = (random.randint(40, current_width-40), random.randint(40, current_height-40))
+        # Use fixed fullscreen dimensions for positioning since game only runs in fullscreen
+        self.rect.center = (random.randint(40, SCREEN_WIDTH-40), random.randint(40, SCREEN_HEIGHT-40))
         
         self.health: int = health
         self.attack_power: int = attack_power
@@ -36,17 +27,9 @@ class Enemy(pygame.sprite.Sprite):
         self.target: pygame.sprite.Sprite = hero_target  # Store the hero target directly
     
     def move(self) -> None:
-        # Get current display surface dimensions for proper boundary checking
-        current_surface: pygame.Surface | None = pygame.display.get_surface()
-        current_width: int
-        current_height: int
-        if current_surface:
-            current_width = current_surface.get_width()
-            current_height = current_surface.get_height()
-        else:
-            # Fallback to config values if no surface available
-            current_width = SCREEN_WIDTH
-            current_height = SCREEN_HEIGHT
+        # Use fixed fullscreen dimensions since game only runs in fullscreen
+        current_width: int = SCREEN_WIDTH
+        current_height: int = SCREEN_HEIGHT
         
         if self.target:
             # Calculate distance to hero
@@ -54,6 +37,8 @@ class Enemy(pygame.sprite.Sprite):
             dy: float = self.target.rect.centery - self.rect.centery
             distance: float = (dx**2 + dy**2)**0.5  # Pythagorean theorem
             
+            # Debug: Print distance and detection info
+            print(f"Enemy at ({self.rect.centerx}, {self.rect.centery}), Hero at ({self.target.rect.centerx}, {self.target.rect.centery}), Distance: {distance:.1f}")
             
             # Always move towards hero regardless of distance
             if distance > 0:  # Avoid division by zero
@@ -62,10 +47,11 @@ class Enemy(pygame.sprite.Sprite):
                 
                 # Move towards hero
                 self.rect.move_ip(dx_normalized * self.target_speed, dy_normalized * self.target_speed)
+                print(f"Moving towards hero: dx={dx_normalized:.2f}, dy={dy_normalized:.2f}")
         else:
             print("No target set for enemy!")
         
-        # Keep enemy within screen bounds using current dimensions
+        # Keep enemy within screen bounds using fixed dimensions
         self.rect.clamp_ip(pygame.Rect(0, 0, current_width, current_height))
  
     def draw(self, surface: pygame.Surface) -> None:

@@ -20,17 +20,9 @@ class Hero(pygame.sprite.Sprite):
     def update(self) -> None:
         pressed_keys: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
         
-        # Get current display surface dimensions for proper boundary checking
-        current_surface: pygame.Surface | None = pygame.display.get_surface()
-        current_width: int
-        current_height: int
-        if current_surface:
-            current_width = current_surface.get_width()
-            current_height = current_surface.get_height()
-        else:
-            # Fallback to config values if no surface available
-            current_width = SCREEN_WIDTH
-            current_height = SCREEN_HEIGHT
+        # Use fixed fullscreen dimensions since game only runs in fullscreen
+        current_width: int = SCREEN_WIDTH
+        current_height: int = SCREEN_HEIGHT
         
         if self.rect.left > 0:
             if(pressed_keys[pygame.K_LEFT]):
