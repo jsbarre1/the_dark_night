@@ -1,12 +1,16 @@
 import pygame
 
-from config import SCREEN_HEIGHT, SCREEN_WIDTH
+from config import SCREEN_HEIGHT, SCREEN_WIDTH, SPRITE_SCALE
 
 class Hero(pygame.sprite.Sprite):
     def __init__(self, name):
         super().__init__()
         self.name = name
-        self.image = pygame.image.load("Hero.png")
+        # Load and scale the hero image
+        original_image = pygame.image.load("Hero.png")
+        scaled_size = (int(original_image.get_width() * SPRITE_SCALE), 
+                      int(original_image.get_height() * SPRITE_SCALE))
+        self.image = pygame.transform.scale(original_image, scaled_size)
         self.rect = self.image.get_rect()
         self.health = 100
         self.age = 0

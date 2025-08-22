@@ -12,7 +12,8 @@ pygame.init()
 
 FramePerSec = pygame.time.Clock()
 
-DISPLAYSURF = pygame.display.set_mode((600,400))
+# Set up fullscreen display
+DISPLAYSURF = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
 DISPLAYSURF.fill(WHITE)
 pygame.display.set_caption("Game")
 
@@ -33,6 +34,11 @@ while True:
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
+        # Add escape key to exit fullscreen
+        elif event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+                pygame.quit()
+                sys.exit()
  
  
     DISPLAYSURF.fill(WHITE)

@@ -1,6 +1,6 @@
 # Game configuration constants
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 400
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 
 # Colors
 BLUE = (0, 0, 255)
@@ -10,4 +10,5 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
 # Game settings
-FPS = 60 
+FPS = 60
+SPRITE_SCALE = 2.5  # Scale factor to make sprites bigger 
