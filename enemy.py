@@ -36,10 +36,7 @@ class Enemy(pygame.sprite.Sprite):
             dx: float = self.target.rect.centerx - self.rect.centerx
             dy: float = self.target.rect.centery - self.rect.centery
             distance: float = (dx**2 + dy**2)**0.5  # Pythagorean theorem
-            
-            # Debug: Print distance and detection info
-            print(f"Enemy at ({self.rect.centerx}, {self.rect.centery}), Hero at ({self.target.rect.centerx}, {self.target.rect.centery}), Distance: {distance:.1f}")
-            
+                        
             # Always move towards hero regardless of distance
             if distance > 0:  # Avoid division by zero
                 dx_normalized: float = dx / distance
@@ -47,7 +44,6 @@ class Enemy(pygame.sprite.Sprite):
                 
                 # Move towards hero
                 self.rect.move_ip(dx_normalized * self.target_speed, dy_normalized * self.target_speed)
-                print(f"Moving towards hero: dx={dx_normalized:.2f}, dy={dy_normalized:.2f}")
         else:
             print("No target set for enemy!")
         
