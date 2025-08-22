@@ -5,11 +5,11 @@ from typing import List
 
 from enemy import Enemy
 from hero import Hero
-from screens import HomeScreen, OptionsScreen
-from config import *
+from screens import HomeScreen, OptionsScreen, PauseMenu
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, RED, DARK_GRAY, FPS
 
 
-def run_game() -> None:
+def run_game() -> str:
     user: Hero = Hero("Absolute")
     firstEnemy: Enemy = Enemy(100, 20, "Sludge Guy", user)
 
@@ -18,33 +18,42 @@ def run_game() -> None:
     all_sprites: pygame.sprite.Group = pygame.sprite.Group()
     all_sprites.add(user)
     all_sprites.add(firstEnemy)
+    
+    # Create pause menu
+    pause_menu = PauseMenu()
 
     while True:
         #Cycles through all events occuring  
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
-                sys.exit()
-            # Handle exit keys
+                return "quit"
+            # Handle pause menu with ESC key
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    # ESC key quits the game
-                    pygame.quit()
-                    sys.exit()
+                    # Show pause menu
+                    pause_action = pause_menu.run(DISPLAYSURF, FramePerSec)
+                    if pause_action == "quit":
+                        pygame.quit()
+                        return "quit"
+                    elif pause_action == "home":
+                        return "home"  # Return to home screen
+                    elif pause_action == "resume":
+                        continue  # Continue the game
                 # Add Tab key to quit the game
                 elif event.key == K_TAB:
                     pygame.quit()
-                    sys.exit()
+                    return "quit"
                 # Add Backspace key to quit the game
                 elif event.key == K_BACKSPACE:
                     pygame.quit()
-                    sys.exit()
+                    return "quit"
                 # Add Q key to quit the game
                 elif event.key == K_q:
                     pygame.quit()
-                    sys.exit()
+                    return "quit"
      
-        DISPLAYSURF.fill(WHITE)
+        DISPLAYSURF.fill(DARK_GRAY)
      
         #Moves and Re-draws all Sprites
         for entity in all_sprites:
@@ -62,7 +71,7 @@ def run_game() -> None:
                     entity.kill() 
               time.sleep(2)
               pygame.quit()
-              sys.exit()        
+              return "quit"
              
         pygame.display.update()
         FramePerSec.tick(FPS)
@@ -88,7 +97,12 @@ while True:
     
     if action == "play":
         # Start the game
-        run_game()
+        game_result = run_game()
+        if game_result == "quit":
+            pygame.quit()
+            sys.exit()
+        elif game_result == "home":
+            continue  # Go back to home screen
     elif action == "options":
         # Show options screen
         options_action = options_screen.run(DISPLAYSURF, FramePerSec)
