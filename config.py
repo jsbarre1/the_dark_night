@@ -1,10 +1,10 @@
 # Game configuration constants
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
+SCREEN_WIDTH: int = 1920
+SCREEN_HEIGHT: int = 1080
 
 # Windowed mode dimensions (much smaller and more reasonable)
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH: int = 800
+WINDOW_HEIGHT: int = 600
 
 # Colors
 BLUE = (0, 0, 255)
@@ -14,5 +14,5 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
 # Game settings
-FPS = 60
-SPRITE_SCALE = 2.5  # Scale factor to make sprites bigger 
+FPS: int = 60
+SPRITE_SCALE: float = 2.5  # Scale factor to make sprites bigger 

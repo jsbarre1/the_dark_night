@@ -1,6 +1,7 @@
 import pygame, sys
 from pygame.locals import *
 import random, time
+from typing import List
 
 from enemy import Enemy
 from hero import Hero
@@ -9,21 +10,21 @@ from config import *
 
 pygame.init()
 
-FramePerSec = pygame.time.Clock()
+FramePerSec: pygame.time.Clock = pygame.time.Clock()
 
 # Start in windowed mode with reasonable size
-DISPLAYSURF = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+DISPLAYSURF: pygame.Surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Game")
 
 # Track fullscreen state
-is_fullscreen = False
+is_fullscreen: bool = False
 
-user = Hero("Absolute")
-firstEnemy = Enemy(100, 20, "Sludge Guy")
+user: Hero = Hero("Absolute")
+firstEnemy: Enemy = Enemy(100, 20, "Sludge Guy", user)
 
-enemies = pygame.sprite.Group()
+enemies: pygame.sprite.Group = pygame.sprite.Group()
 enemies.add(firstEnemy)
-all_sprites = pygame.sprite.Group()
+all_sprites: pygame.sprite.Group = pygame.sprite.Group()
 all_sprites.add(user)
 all_sprites.add(firstEnemy)
 
@@ -64,8 +65,8 @@ while True:
         elif event.type == VIDEORESIZE:
             if not is_fullscreen:
                 # Update the display surface to match the new window size
-                new_width = event.w
-                new_height = event.h
+                new_width: int = event.w
+                new_height: int = event.h
                 DISPLAYSURF = pygame.display.set_mode((new_width, new_height))
                 # Update the window caption to show new dimensions
                 pygame.display.set_caption(f"Game - {new_width}x{new_height}")
