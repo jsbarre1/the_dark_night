@@ -17,16 +17,27 @@ class Hero(pygame.sprite.Sprite):
     
     def update(self):
         pressed_keys = pygame.key.get_pressed()
+        
+        # Get current display surface dimensions for proper boundary checking
+        current_surface = pygame.display.get_surface()
+        if current_surface:
+            current_width = current_surface.get_width()
+            current_height = current_surface.get_height()
+        else:
+            # Fallback to config values if no surface available
+            current_width = SCREEN_WIDTH
+            current_height = SCREEN_HEIGHT
+        
         if self.rect.left > 0:
             if(pressed_keys[pygame.K_LEFT]):
                 self.rect.move_ip(-5,0)
-        if self.rect.right < SCREEN_WIDTH:
+        if self.rect.right < current_width:
             if pressed_keys[pygame.K_RIGHT]:
                 self.rect.move_ip(5,0)
         if self.rect.top > 0:
             if(pressed_keys[pygame.K_UP]):
                 self.rect.move_ip(0,-5)
-        if (self.rect.bottom) < SCREEN_HEIGHT: 
+        if (self.rect.bottom) < current_height: 
             if(pressed_keys[pygame.K_DOWN]):
                 self.rect.move_ip(0,5)
 
