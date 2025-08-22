@@ -6,7 +6,7 @@ from typing import List
 from enemy import Enemy
 from hero import Hero
 from screens import HomeScreen, OptionsScreen, PauseMenu
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, RED, DARK_GRAY, FPS
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, RED, DARK_GRAY, GAME_BG, FPS
 
 
 def run_game() -> str:
@@ -53,7 +53,7 @@ def run_game() -> str:
                     pygame.quit()
                     return "quit"
      
-        DISPLAYSURF.fill(DARK_GRAY)
+        DISPLAYSURF.fill(GAME_BG)
      
         #Moves and Re-draws all Sprites
         for entity in all_sprites:
