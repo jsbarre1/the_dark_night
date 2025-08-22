@@ -47,7 +47,7 @@ class Enemy(pygame.sprite.Sprite):
             # Fallback to config values if no surface available
             current_width = SCREEN_WIDTH
             current_height = SCREEN_HEIGHT
-                
+        
         if self.target:
             # Calculate distance to hero
             dx: float = self.target.rect.centerx - self.rect.centerx
@@ -65,8 +65,8 @@ class Enemy(pygame.sprite.Sprite):
         else:
             print("No target set for enemy!")
         
-        # Keep enemy within screen bounds
-        self.rect.clamp_ip(pygame.display.get_surface().get_rect())
+        # Keep enemy within screen bounds using current dimensions
+        self.rect.clamp_ip(pygame.Rect(0, 0, current_width, current_height))
  
     def draw(self, surface: pygame.Surface) -> None:
         surface.blit(self.image, self.rect) 
