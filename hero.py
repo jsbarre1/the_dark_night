@@ -8,14 +8,28 @@ class Hero(pygame.sprite.Sprite):
     def __init__(self, name: str) -> None:
         super().__init__()
         self.name: str = name
-        # Load and scale the hero image
-        original_image: pygame.Surface = pygame.image.load("sprites/Hero.png")
-        scaled_size: Tuple[int, int] = (int(original_image.get_width() * SPRITE_SCALE), 
-                                      int(original_image.get_height() * SPRITE_SCALE))
-        self.image: pygame.Surface = pygame.transform.scale(original_image, scaled_size)
+        
+        # Load and scale the hero images
+        self.original_image: pygame.Surface = pygame.image.load("sprites/batman_idle.png")
+        self.batman_down1: pygame.Surface = pygame.image.load("sprites/batman_walking_down1.png")
+        self.batman_down2: pygame.Surface = pygame.image.load("sprites/batman_walking_down2.png")
+        
+        # Scale all images
+        scaled_size: Tuple[int, int] = (int(self.original_image.get_width() * SPRITE_SCALE), 
+                                      int(self.original_image.get_height() * SPRITE_SCALE))
+        
+        self.image: pygame.Surface = pygame.transform.scale(self.original_image, scaled_size)
+        self.batman_down1_scaled: pygame.Surface = pygame.transform.scale(self.batman_down1, scaled_size)
+        self.batman_down2_scaled: pygame.Surface = pygame.transform.scale(self.batman_down2, scaled_size)
+        
         self.rect: pygame.Rect = self.image.get_rect()
         self.health: int = 100
         self.age: int = 0
+        
+        # Animation variables
+        self.animation_frame: int = 0
+        self.animation_speed: int = 0
+        self.is_walking_down: bool = False
     
     def update(self) -> None:
         pressed_keys: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
@@ -23,6 +37,9 @@ class Hero(pygame.sprite.Sprite):
         # Use fixed fullscreen dimensions since game only runs in fullscreen
         current_width: int = SCREEN_WIDTH
         current_height: int = SCREEN_HEIGHT
+        
+        # Reset walking down flag
+        self.is_walking_down = False
         
         if self.rect.left > 0:
             if(pressed_keys[pygame.K_LEFT]):
@@ -34,8 +51,34 @@ class Hero(pygame.sprite.Sprite):
             if(pressed_keys[pygame.K_UP]):
                 self.rect.move_ip(0,-5)
         if (self.rect.bottom) < current_height: 
-            if(pressed_keys[pygame.K_DOWN]):
+            if pressed_keys[pygame.K_DOWN]:
                 self.rect.move_ip(0,5)
+                self.is_walking_down = True
+        
+        # Update animation
+        self._update_animation()
+    
+    def _update_animation(self) -> None:
+        """Update the walking animation when moving down"""
+        if self.is_walking_down:
+            self.animation_speed += 1
+            # Change frame every 8 updates (adjust this value to control animation speed)
+            if self.animation_speed >= 8:
+                self.animation_frame = (self.animation_frame + 1) % 2
+                self.animation_speed = 0
+                
+                # Update the image based on current frame
+                if self.animation_frame == 0:
+                    self.image = self.batman_down1_scaled
+                else:
+                    self.image = self.batman_down2_scaled
+        else:
+            # Reset to default image when not walking down
+            self.image = pygame.transform.scale(self.original_image, 
+                                             (int(self.original_image.get_width() * SPRITE_SCALE), 
+                                              int(self.original_image.get_height() * SPRITE_SCALE)))
+            self.animation_frame = 0
+            self.animation_speed = 0
 
     def draw(self, surface: pygame.Surface) -> None:
         surface.blit(self.image, self.rect)                
