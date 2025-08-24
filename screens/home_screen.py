@@ -38,7 +38,7 @@ class HomeScreen:
             
             # Draw subtitle
             subtitle_font = pygame.font.Font(None, 36)
-            subtitle_text = subtitle_font.render("A Batman Adventure", True, WHITE)
+            subtitle_text = subtitle_font.render("An Adventure", True, WHITE)
             subtitle_rect = subtitle_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//4 + 60))
             display_surface.blit(subtitle_text, subtitle_rect)
             

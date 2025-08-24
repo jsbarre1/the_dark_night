@@ -4,31 +4,43 @@ import random, time
 from typing import List
 
 from enemy import Enemy
-from hero import Hero
+from player import Player
 from screens import HomeScreen, OptionsScreen, PauseMenu, GameOverScreen
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, RED, DARK_GRAY, GAME_BG, FPS
+from weapon import PlayerProjectile
 
 
 def run_game() -> str:
-    user: Hero = Hero("Absolute")
-    firstEnemy: Enemy = Enemy(100, 20, "Sludge Guy", user)
+    player: Player = Player("Absolute")
+    firstEnemy: Enemy = Enemy(100, 20, "Sludge Guy", player)
 
     enemies: pygame.sprite.Group = pygame.sprite.Group()
     enemies.add(firstEnemy)
     all_sprites: pygame.sprite.Group = pygame.sprite.Group()
-    all_sprites.add(user)
+    all_sprites.add(player)
     all_sprites.add(firstEnemy)
     
     # Create pause menu and game over screen
     pause_menu = PauseMenu()
     game_over_screen = GameOverScreen()
+    
+    player_projectiles: List[PlayerProjectile] = []
+    batarang: pygame.Surface = pygame.image.load("sprites/batarang.png")
+
 
     while True:
-        #Cycles through all events occuring  
+        #Cycles through all events occuring
+        mouse_x, mouse_y = pygame.mouse.get_pos()  
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 return "quit"
+            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    new_projectile = PlayerProjectile(player.rect.centerx, player.rect.centery, mouse_x, mouse_y, batarang)
+                    player_projectiles.append(new_projectile)
+                 
             # Handle pause menu with ESC key
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
@@ -59,13 +71,22 @@ def run_game() -> str:
         #Moves and Re-draws all Sprites
         for entity in all_sprites:
             DISPLAYSURF.blit(entity.image, entity.rect)
-            if isinstance(entity, Hero):
+            if isinstance(entity, Player):
                 entity.update()
+                entity.handle_weapons(DISPLAYSURF)
+                # entity.handle_weapons(DISPLAYSURF)  # Commented out until weapon system is fully implemented
             elif isinstance(entity, Enemy):
                 entity.move()
+        
+        for projectile in player_projectiles:
+            projectile.fire_player_projectile(DISPLAYSURF)
+        
+        # Clean up projectiles that go off-screen
+        player_projectiles = [p for p in player_projectiles if 
+                            0 <= p.x <= SCREEN_WIDTH and 0 <= p.y <= SCREEN_HEIGHT]
      
         #To be run if collision occurs between Player and Enemy
-        if pygame.sprite.spritecollideany(user, enemies):
+        if pygame.sprite.spritecollideany(player, enemies):
             # Show game over screen
             game_over_action = game_over_screen.run(DISPLAYSURF, FramePerSec)
             if game_over_action == "quit":
