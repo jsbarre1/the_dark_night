@@ -20,6 +20,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
         enemy_img: pygame.Surface,
     ) -> None:
         super().__init__()
+        
         self.image: pygame.Surface = enemy_img
         self.rect: pygame.Rect = self.image.get_rect()
 
@@ -66,6 +67,23 @@ class Enemy(pygame.sprite.Sprite, ABC):
     def get_attack_animation_frames(self) -> List[pygame.Surface]:
         """Get the attack animation frames for this enemy type"""
         pass
+    
+    def get_weapon_animation_frames(self) -> dict:
+        """Get all available weapon animation frames from the weapon"""
+        if hasattr(self.weapon, 'animation_swing_left') and hasattr(self.weapon, 'animation_swing_right'):
+            return {
+                "left": self.weapon.animation_swing_left.copy(),
+                "right": self.weapon.animation_swing_right.copy()
+            }
+        return {}
+    
+    def set_attack_direction(self, direction: str) -> None:
+        """Set the attack direction - to be implemented by subclasses"""
+        pass
+    
+    def get_attack_direction(self) -> str:
+        """Get the current attack direction"""
+        return getattr(self, 'attack_direction', 'right')
 
     def is_within_attack_range(self) -> bool:
         """Check if the enemy is within attack range of the target"""
@@ -108,12 +126,24 @@ class Enemy(pygame.sprite.Sprite, ABC):
     def start_attack_animation(self) -> None:
         """Start the attack animation"""
         if not self.is_attacking and self.weapon_imgs:
+            # Determine attack direction if the subclass supports it
+            if hasattr(self, 'set_attack_direction') and self.target:
+                target_x = self.target.rect.centerx
+                enemy_x = self.rect.centerx
+                
+                # Set attack direction based on target position relative to enemy
+                if target_x < enemy_x:
+                    self.set_attack_direction("left")
+                else:
+                    self.set_attack_direction("right")
+            
             self.is_attacking = True
             self.attack_animation_index = 0
             self.attack_frame_counter = 0
 
             # Start with first weapon frame
-            self.current_weapon_img = self.weapon_imgs[0]
+            if self.weapon_imgs:
+                self.current_weapon_img = self.weapon_imgs[0]
 
     def is_attacking_now(self) -> bool:
         """Check if the enemy is currently performing an attack animation"""
@@ -208,8 +238,7 @@ class SludgeEnemy(Enemy):
     def setup_weapon_animations(self) -> None:
         """Setup weapon animations using the weapon's stored animation frames"""
         if isinstance(self.weapon, EnemySword):
-            # Use the weapon's stored animation frames
-            # Default to right swing, can be changed based on attack direction
+            # Initialize with right swing as default
             self.weapon_imgs = self.weapon.animation_swing_right.copy()
             self.attack_direction = "right"
         else:
@@ -219,6 +248,26 @@ class SludgeEnemy(Enemy):
     def get_attack_animation_frames(self) -> List[pygame.Surface]:
         """Get the attack animation frames for sludge enemy"""
         return self.weapon_imgs.copy()
+    
+    def get_weapon_animation_frames(self) -> dict:
+        """Get all available weapon animation frames from the EnemySword"""
+        if isinstance(self.weapon, EnemySword):
+            return {
+                "left": self.weapon.animation_swing_left.copy(),
+                "right": self.weapon.animation_swing_right.copy()
+            }
+        return {}
+    
+    def get_sword_animation_info(self) -> dict:
+        """Get detailed information about the sword animations"""
+        if isinstance(self.weapon, EnemySword):
+            return {
+                "left_frames": len(self.weapon.animation_swing_left),
+                "right_frames": len(self.weapon.animation_swing_right),
+                "current_direction": self.attack_direction,
+                "current_frame": self.attack_animation_index
+            }
+        return {}
 
     def set_attack_direction(self, direction: str) -> None:
         """Set the attack direction and update weapon images accordingly"""
@@ -230,9 +279,11 @@ class SludgeEnemy(Enemy):
                 self.weapon_imgs = self.weapon.animation_swing_right.copy()
                 self.attack_direction = "right"
             
-            # Reset animation state
+            # Reset animation state and update current weapon image
             if self.weapon_imgs:
                 self.current_weapon_img = self.weapon_imgs[0]
+                # Also update the original weapon image for restoration after attack
+                self.original_weapon_img = self.weapon_imgs[0].copy()
 
     def get_sword_angle(self) -> float:
         """Get the current sword angle based on animation frame"""
@@ -240,11 +291,12 @@ class SludgeEnemy(Enemy):
             return 0.0
         
         # Map animation index to sword angle based on direction
+        # These angles correspond to the sludge sword animation frames
         if self.attack_direction == "left":
-            # Left swing angles (reverse order)
+            # Left swing angles (reverse order for left-facing attack)
             angles = [90, 65, 45, 25, 0, -20, -45, -70, -90]
         else:
-            # Right swing angles
+            # Right swing angles (standard order for right-facing attack)
             angles = [-90, -65, -45, -25, 0, 20, 45, 70, 90]
         
         if self.attack_animation_index < len(angles):
@@ -269,5 +321,6 @@ class SludgeEnemy(Enemy):
             self.attack_animation_index = 0
             self.attack_frame_counter = 0
 
-            # Start with first weapon frame
-            self.current_weapon_img = self.weapon_imgs[0]
+            # Start with first weapon frame from the selected direction
+            if self.weapon_imgs:
+                self.current_weapon_img = self.weapon_imgs[0]
