@@ -1,5 +1,5 @@
-from ast import List
 import math
+from typing import List
 
 import pygame
 from enum import Enum
@@ -22,12 +22,12 @@ class Weapon:
 
 class PlayerWeapon(Weapon):
     def __init__(self, name: str, type: WeaponType, damage: int, img: pygame.Surface):
-        super().__init__(name, damage, img)
+        super().__init__(name, type, damage, img)
 
 
 class EnemyWeapon(Weapon):
     def __init__(self, name: str, type: WeaponType, damage: int, img: pygame.Surface):
-        super().__init__(name, damage, img)
+        super().__init__(name, type, damage, img)
 
 
 class EnemySword(EnemyWeapon):
@@ -40,7 +40,7 @@ class EnemySword(EnemyWeapon):
         animation_swing_left: List[pygame.Surface],
         animation_swing_right: List[pygame.Surface],
     ):
-        super().__init__(name, damage, img)
+        super().__init__(name, type, damage, img)
         self.animation_swing_left = animation_swing_left
         self.animation_swing_right = animation_swing_right
 

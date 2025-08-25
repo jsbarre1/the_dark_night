@@ -3,7 +3,7 @@ from pygame.locals import *
 import random, time
 from typing import List
 
-from enemy import Enemy
+from enemy import Enemy, SludgeEnemy
 from player import Player
 from screens import HomeScreen, OptionsScreen, PauseMenu, GameOverScreen
 from config import (
@@ -83,8 +83,8 @@ def run_game() -> str:
         sludge_sword_imgs_swing_right,
     )
 
-    firstEnemySludge: Enemy = Enemy(
-        100, 3, "Sludge Guy", player, sludge_sword, sludge_img
+    firstEnemySludge: SludgeEnemy = SludgeEnemy(
+        100, 3, player, sludge_sword, sludge_img
     )
 
     enemies: pygame.sprite.Group = pygame.sprite.Group()

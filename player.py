@@ -3,7 +3,7 @@ import pygame
 from typing import Tuple
 
 from config import SCREEN_HEIGHT, SCREEN_WIDTH, SPRITE_SCALE
-from weapon import PlayerWeapon, Weapon
+from weapon import PlayerWeapon, Weapon, WeaponType
 
 
 class Player(pygame.sprite.Sprite):
@@ -11,7 +11,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.name: str = name
         batarang: pygame.Surface = pygame.image.load("sprites/batarang.png")
-        self.weapon: PlayerWeapon = PlayerWeapon("begining_batarang", 3, batarang)
+        self.weapon: PlayerWeapon = PlayerWeapon("begining_batarang", WeaponType.SPECIAL, 3, batarang)
 
         # Load and scale the hero images
         self.original_image: pygame.Surface = pygame.image.load(

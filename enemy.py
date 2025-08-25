@@ -1,12 +1,15 @@
 import math
 import random
 import pygame
-from typing import List
+from typing import List, Optional
+from abc import ABC, abstractmethod
 
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
-from weapon import Weapon
+from weapon import Weapon, EnemySword
 
-class Enemy(pygame.sprite.Sprite):
+class Enemy(pygame.sprite.Sprite, ABC):
+    """Abstract base class for all enemies"""
+    
     def __init__(
         self,
         health: int,
@@ -37,24 +40,32 @@ class Enemy(pygame.sprite.Sprite):
         self.target_speed: float = 2.0  # Movement speed
         self.target: pygame.sprite.Sprite = target  # Store the hero target directly
 
-        # Store weapon images array for rendering
-        self.weapon_imgs: List[pygame.Surface] = 
-        self.current_weapon_img: pygame.Surface = (
-            weapon_imgs[0] if weapon_imgs else None
-        )
+        # Weapon and animation variables - to be implemented by subclasses
+        self.weapon: Weapon = weapon
+        self.weapon_imgs: List[pygame.Surface] = []
+        self.current_weapon_img: Optional[pygame.Surface] = None
 
-        # Sword swinging animation variables
+        # Attack animation variables
         self.attack_range: int = 500
         self.is_attacking: bool = False
         self.attack_animation_speed: int = 8  # Frames per animation update
         self.attack_frame_counter: int = 0
         self.attack_animation_index: int = 0
+        self.attack_direction: str = "right"  # Default attack direction
 
         # Store original images for when not attacking
         self.original_enemy_image: pygame.Surface = self.image.copy()
-        self.original_weapon_img: pygame.Surface = (
-            self.current_weapon_img.copy() if self.current_weapon_img else None
-        )
+        self.original_weapon_img: Optional[pygame.Surface] = None
+
+    @abstractmethod
+    def setup_weapon_animations(self) -> None:
+        """Setup weapon animations for this specific enemy type"""
+        pass
+
+    @abstractmethod
+    def get_attack_animation_frames(self) -> List[pygame.Surface]:
+        """Get the attack animation frames for this enemy type"""
+        pass
 
     def is_within_attack_range(self) -> bool:
         """Check if the enemy is within attack range of the target"""
@@ -68,7 +79,7 @@ class Enemy(pygame.sprite.Sprite):
         return distance <= self.attack_range
 
     def update_attack_animation(self) -> None:
-        """Update the sword swinging animation"""
+        """Update the attack animation"""
         if not self.is_attacking:
             return
 
@@ -91,17 +102,17 @@ class Enemy(pygame.sprite.Sprite):
                     else None
                 )
             else:
-                # Update to next sword frame
+                # Update to next weapon frame
                 self.current_weapon_img = self.weapon_imgs[self.attack_animation_index]
 
     def start_attack_animation(self) -> None:
-        """Start the sword swinging attack animation"""
+        """Start the attack animation"""
         if not self.is_attacking and self.weapon_imgs:
             self.is_attacking = True
             self.attack_animation_index = 0
             self.attack_frame_counter = 0
 
-            # Start with first sword frame
+            # Start with first weapon frame
             self.current_weapon_img = self.weapon_imgs[0]
 
     def is_attacking_now(self) -> bool:
@@ -109,6 +120,7 @@ class Enemy(pygame.sprite.Sprite):
         return self.is_attacking
 
     def move(self) -> None:
+        """Move the enemy towards the target with offset behavior"""
         # Use fixed fullscreen dimensions since game only runs in fullscreen
         current_width: int = SCREEN_WIDTH
         current_height: int = SCREEN_HEIGHT
@@ -159,12 +171,103 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.clamp_ip(pygame.Rect(0, 0, current_width, current_height))
 
     def draw(self, surface: pygame.Surface) -> None:
-        # Draw the sludge enemy
+        """Draw the enemy and its weapon"""
+        # Draw the enemy
         surface.blit(self.image, self.rect)
 
-        # Draw the weapon (sword) if it exists
+        # Draw the weapon if it exists
         if self.current_weapon_img:
             # Position the weapon relative to the enemy
             weapon_rect = self.current_weapon_img.get_rect()
             weapon_rect.center = self.rect.center
             surface.blit(self.current_weapon_img, weapon_rect)
+
+
+class SludgeEnemy(Enemy):
+    """Sludge enemy with sword-wielding capabilities"""
+    
+    def __init__(
+        self,
+        health: int,
+        attack_power: int,
+        target: pygame.sprite.Sprite,
+        weapon: EnemySword,
+        enemy_img: pygame.Surface,
+    ) -> None:
+        # Call parent constructor with sludge-specific name
+        super().__init__(health, attack_power, "Sludge", target, weapon, enemy_img)
+        
+        # Setup weapon animations using the weapon's stored frames
+        self.setup_weapon_animations()
+        
+        # Set initial weapon image
+        if self.weapon_imgs:
+            self.current_weapon_img = self.weapon_imgs[0]
+            self.original_weapon_img = self.weapon_imgs[0].copy()
+
+    def setup_weapon_animations(self) -> None:
+        """Setup weapon animations using the weapon's stored animation frames"""
+        if isinstance(self.weapon, EnemySword):
+            # Use the weapon's stored animation frames
+            # Default to right swing, can be changed based on attack direction
+            self.weapon_imgs = self.weapon.animation_swing_right.copy()
+            self.attack_direction = "right"
+        else:
+            # Fallback for non-sword weapons
+            self.weapon_imgs = []
+
+    def get_attack_animation_frames(self) -> List[pygame.Surface]:
+        """Get the attack animation frames for sludge enemy"""
+        return self.weapon_imgs.copy()
+
+    def set_attack_direction(self, direction: str) -> None:
+        """Set the attack direction and update weapon images accordingly"""
+        if isinstance(self.weapon, EnemySword):
+            if direction == "left":
+                self.weapon_imgs = self.weapon.animation_swing_left.copy()
+                self.attack_direction = "left"
+            elif direction == "right":
+                self.weapon_imgs = self.weapon.animation_swing_right.copy()
+                self.attack_direction = "right"
+            
+            # Reset animation state
+            if self.weapon_imgs:
+                self.current_weapon_img = self.weapon_imgs[0]
+
+    def get_sword_angle(self) -> float:
+        """Get the current sword angle based on animation frame"""
+        if not self.is_attacking or not self.weapon_imgs:
+            return 0.0
+        
+        # Map animation index to sword angle based on direction
+        if self.attack_direction == "left":
+            # Left swing angles (reverse order)
+            angles = [90, 65, 45, 25, 0, -20, -45, -70, -90]
+        else:
+            # Right swing angles
+            angles = [-90, -65, -45, -25, 0, 20, 45, 70, 90]
+        
+        if self.attack_animation_index < len(angles):
+            return angles[self.attack_animation_index]
+        return 0.0
+
+    def start_attack_animation(self) -> None:
+        """Start the attack animation with direction awareness"""
+        if not self.is_attacking and self.weapon_imgs:
+            # Determine attack direction based on target position
+            if self.target:
+                target_x = self.target.rect.centerx
+                enemy_x = self.rect.centerx
+                
+                # Set attack direction based on target position relative to enemy
+                if target_x < enemy_x:
+                    self.set_attack_direction("left")
+                else:
+                    self.set_attack_direction("right")
+            
+            self.is_attacking = True
+            self.attack_animation_index = 0
+            self.attack_frame_counter = 0
+
+            # Start with first weapon frame
+            self.current_weapon_img = self.weapon_imgs[0]
