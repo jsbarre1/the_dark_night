@@ -59,6 +59,8 @@ def run_game() -> str:
         "sprites/sludge/sludge_sword_0.png"
     )
     sludge_img: pygame.Surface = pygame.image.load("sprites/sludge/sludge_neutral.png")
+    bob_img: pygame.Surface = pygame.image.load("sprites/bob/bob1.png")
+
     # Load all sword animation frames
     sludge_sword_imgs_swing_left: List[pygame.Surface] = [
         pygame.image.load("sprites/sludge/sludge_sword_20.png").convert_alpha(),
@@ -83,15 +85,22 @@ def run_game() -> str:
         sludge_sword_imgs_swing_right,
     )
 
-    firstEnemySludge: SludgeEnemy = SludgeEnemy(
+    first_enemy_sludge: SludgeEnemy = SludgeEnemy(
         100, 3, player, sludge_sword, sludge_img
+    )
+    first_enemy_bob: SludgeEnemy = SludgeEnemy(
+        100, 3, player, sludge_sword, bob_img
     )
 
     enemies: pygame.sprite.Group = pygame.sprite.Group()
-    enemies.add(firstEnemySludge)
+    enemies.add(first_enemy_sludge)
+    enemies.add(first_enemy_bob)
+
     all_sprites: pygame.sprite.Group = pygame.sprite.Group()
     all_sprites.add(player)
-    all_sprites.add(firstEnemySludge)
+    all_sprites.add(first_enemy_sludge)
+    all_sprites.add(first_enemy_bob)
+
 
     # Create pause menu and game over screen
     pause_menu = PauseMenu()
