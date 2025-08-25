@@ -18,6 +18,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
         target: pygame.sprite.Sprite,
         weapon: Weapon,
         enemy_img: pygame.Surface,
+        walking_images: List[pygame.Surface] = None,
     ) -> None:
         super().__init__()
         
@@ -57,10 +58,29 @@ class Enemy(pygame.sprite.Sprite, ABC):
         # Store original images for when not attacking
         self.original_enemy_image: pygame.Surface = self.image.copy()
         self.original_weapon_img: Optional[pygame.Surface] = None
+        
+        # Walking animation variables
+        self.walking_state: int = 0  # 0 or 1 for two walking states
+        self.walking_animation_speed: int = 15  # Frames per walking state change
+        self.walking_frame_counter: int = 0
+        self.walking_images: List[pygame.Surface] = []  # Two walking state images
+        self.is_moving: bool = False
+        
+        # Setup walking images if provided
+        if walking_images and len(walking_images) >= 2:
+            self.walking_images = walking_images[:2]
+            # Set initial image to first walking state
+            self.image = self.walking_images[0].copy()
+            self.original_enemy_image = self.walking_images[0].copy()
 
     @abstractmethod
     def setup_weapon_animations(self) -> None:
         """Setup weapon animations for this specific enemy type"""
+        pass
+    
+    @abstractmethod
+    def setup_walking_animations(self) -> None:
+        """Setup walking animations for this specific enemy type"""
         pass
 
     @abstractmethod
@@ -84,6 +104,62 @@ class Enemy(pygame.sprite.Sprite, ABC):
     def get_attack_direction(self) -> str:
         """Get the current attack direction"""
         return getattr(self, 'attack_direction', 'right')
+    
+    def update_walking_animation(self) -> None:
+        """Update the walking animation state"""
+        if not self.is_moving or not self.walking_images:
+            return
+            
+        self.walking_frame_counter += 1
+        
+        if self.walking_frame_counter >= self.walking_animation_speed:
+            self.walking_frame_counter = 0
+            # Toggle between walking states 0 and 1
+            self.walking_state = 1 - self.walking_state
+            # Update the enemy image to the current walking state
+            if self.walking_images and not self.is_attacking:
+                self.image = self.walking_images[self.walking_state].copy()
+    
+    def set_moving_state(self, moving: bool) -> None:
+        """Set whether the enemy is currently moving"""
+        self.is_moving = moving
+        if not moving and self.walking_images:
+            # Reset to first walking state when stopped
+            self.walking_state = 0
+            self.walking_frame_counter = 0
+            if not self.is_attacking:
+                self.image = self.walking_images[0].copy()
+    
+    def get_walking_state(self) -> int:
+        """Get the current walking state (0 or 1)"""
+        return self.walking_state
+    
+    def set_walking_animation_speed(self, speed: int) -> None:
+        """Set the walking animation speed (lower = faster)"""
+        self.walking_animation_speed = max(1, speed)  # Ensure speed is at least 1
+    
+    def reset_walking_animation(self) -> None:
+        """Reset walking animation to initial state"""
+        self.walking_state = 0
+        self.walking_frame_counter = 0
+        if self.walking_images and not self.is_attacking:
+            self.image = self.walking_images[0].copy()
+    
+    def set_walking_images(self, walking_images: List[pygame.Surface]) -> None:
+        """Set walking images after initialization"""
+        if walking_images and len(walking_images) >= 2:
+            self.walking_images = walking_images[:2]
+            # Update current image if not attacking
+            if not self.is_attacking:
+                self.image = self.walking_images[self.walking_state].copy()
+            # Update original enemy image
+            self.original_enemy_image = self.walking_images[0].copy()
+        else:
+            print("Warning: Invalid walking images provided. Need at least 2 images.")
+    
+    def get_walking_images(self) -> List[pygame.Surface]:
+        """Get the current walking images"""
+        return self.walking_images.copy() if self.walking_images else []
 
     def is_within_attack_range(self) -> bool:
         """Check if the enemy is within attack range of the target"""
@@ -112,8 +188,11 @@ class Enemy(pygame.sprite.Sprite, ABC):
                 self.attack_animation_index = 0
                 # End attack after one complete cycle
                 self.is_attacking = False
-                # Restore original images
-                self.image = self.original_enemy_image.copy()
+                # Restore to current walking state or original image
+                if self.walking_images and self.is_moving:
+                    self.image = self.walking_images[self.walking_state].copy()
+                else:
+                    self.image = self.original_enemy_image.copy()
                 self.current_weapon_img = (
                     self.original_weapon_img.copy()
                     if self.original_weapon_img
@@ -193,9 +272,17 @@ class Enemy(pygame.sprite.Sprite, ABC):
 
             # Apply movement
             self.rect.move_ip(move_x, move_y)
+            
+            # Update walking animation if moving
+            if move_x != 0 or move_y != 0:
+                self.set_moving_state(True)
+                self.update_walking_animation()
+            else:
+                self.set_moving_state(False)
 
         else:
             print("No target set for enemy!")
+            self.set_moving_state(False)
 
         # Keep enemy within screen bounds using fixed dimensions
         self.rect.clamp_ip(pygame.Rect(0, 0, current_width, current_height))
@@ -223,12 +310,16 @@ class SludgeEnemy(Enemy):
         target: pygame.sprite.Sprite,
         weapon: EnemySword,
         enemy_img: pygame.Surface,
+        walking_images: List[pygame.Surface] = None,
     ) -> None:
         # Call parent constructor with sludge-specific name
         super().__init__(health, attack_power, "Sludge", target, weapon, enemy_img)
         
         # Setup weapon animations using the weapon's stored frames
         self.setup_weapon_animations()
+        
+        # Setup walking animations with provided images
+        self.setup_walking_animations(walking_images)
         
         # Set initial weapon image
         if self.weapon_imgs:
@@ -244,6 +335,19 @@ class SludgeEnemy(Enemy):
         else:
             # Fallback for non-sword weapons
             self.weapon_imgs = []
+    
+    def setup_walking_animations(self, walking_images: List[pygame.Surface] = None) -> None:
+        """Setup walking animations using provided images or fallback to default"""
+        if walking_images and len(walking_images) >= 2:
+            # Use provided walking images
+            self.walking_images = walking_images[:2]  # Take first two images
+            # Set initial image to first walking state
+            self.image = self.walking_images[0].copy()
+            self.original_enemy_image = self.walking_images[0].copy()
+        else:
+            # Fallback to using the current image for both states
+            self.walking_images = [self.image, self.image]
+            print("Warning: SludgeEnemy using fallback walking images. Provide walking_images parameter for proper animation.")
 
     def get_attack_animation_frames(self) -> List[pygame.Surface]:
         """Get the attack animation frames for sludge enemy"""
@@ -268,6 +372,16 @@ class SludgeEnemy(Enemy):
                 "current_frame": self.attack_animation_index
             }
         return {}
+    
+    def get_walking_animation_info(self) -> dict:
+        """Get detailed information about the walking animations"""
+        return {
+            "walking_frames": len(self.walking_images),
+            "current_walking_state": self.walking_state,
+            "is_moving": self.is_moving,
+            "walking_frame_counter": self.walking_frame_counter,
+            "walking_animation_speed": self.walking_animation_speed
+        }
 
     def set_attack_direction(self, direction: str) -> None:
         """Set the attack direction and update weapon images accordingly"""

@@ -18,6 +18,12 @@ from config import (
 )
 from weapon import EnemySword, PlayerProjectile, WeaponType
 
+# Walking Animation System:
+# - Each enemy now has two walking states that alternate while moving
+# - Walking images are loaded once and passed to enemy constructors
+# - Enemies automatically switch between walking states every 15 frames while moving
+# - Walking animations work alongside attack animations without conflicts
+
 
 def display_health(display: pygame.Surface, player: Player) -> None:
     """Display the player's health as a red status bar on the top right of the screen"""
@@ -55,11 +61,27 @@ def display_health(display: pygame.Surface, player: Player) -> None:
 def run_game() -> str:
     player: Player = Player("Absolute")
     main_display_scroll = [0, 0]
+    
+    # Load sludge sword base image
     sludge_sword_img: pygame.Surface = pygame.image.load(
         "sprites/sludge/sludge_sword_0.png"
     )
-    sludge_img: pygame.Surface = pygame.image.load("sprites/sludge/sludge_neutral.png")
-    bob_img: pygame.Surface = pygame.image.load("sprites/bob/bob1.png")
+    
+    # Load sludge enemy base image
+    sludge_img: pygame.Surface = pygame.image.load("sprites/sludge/sludge.png")
+    
+    # Load walking animation images for sludge enemy
+    sludge_walking_img1: pygame.Surface = pygame.image.load("sprites/sludge/sludge_neutral1.png").convert_alpha()
+    sludge_walking_img2: pygame.Surface = pygame.image.load("sprites/sludge/sludge_neutral2.png").convert_alpha()
+    sludge_walking_images: List[pygame.Surface] = [sludge_walking_img1, sludge_walking_img2]
+    
+    bob_walking_img1: pygame.Surface = pygame.image.load("sprites/bob/bob1.png").convert_alpha()
+    bob_walking_img2: pygame.Surface = pygame.image.load("sprites/bob/bob2.png").convert_alpha()
+    bob_walking_images: List[pygame.Surface] = [bob_walking_img1, bob_walking_img2]
+    
+    
+    
+
 
     # Load all sword animation frames
     sludge_sword_imgs_swing_left: List[pygame.Surface] = [
@@ -86,10 +108,10 @@ def run_game() -> str:
     )
 
     first_enemy_sludge: SludgeEnemy = SludgeEnemy(
-        100, 3, player, sludge_sword, sludge_img
+        100, 3, player, sludge_sword, sludge_img, sludge_walking_images
     )
     first_enemy_bob: SludgeEnemy = SludgeEnemy(
-        100, 3, player, sludge_sword, bob_img
+        100, 3, player, sludge_sword, sludge_img, bob_walking_images
     )
 
     enemies: pygame.sprite.Group = pygame.sprite.Group()
@@ -157,6 +179,25 @@ def run_game() -> str:
                 elif event.key == K_q:
                     pygame.quit()
                     return "quit"
+                # Add W key to test walking animation speed
+                elif event.key == K_w:
+                    for enemy in enemies:
+                        if isinstance(enemy, SludgeEnemy):
+                            current_speed = enemy.walking_animation_speed
+                            new_speed = max(1, current_speed - 5)  # Decrease speed (faster animation)
+                            enemy.set_walking_animation_speed(new_speed)
+                # Add S key to test walking animation speed (slower)
+                elif event.key == K_s:
+                    for enemy in enemies:
+                        if isinstance(enemy, SludgeEnemy):
+                            current_speed = enemy.walking_animation_speed
+                            new_speed = current_speed + 5  # Increase speed (slower animation)
+                            enemy.set_walking_animation_speed(new_speed)
+                # Add R key to reset walking animations
+                elif event.key == K_r:
+                    for enemy in enemies:
+                        if isinstance(enemy, SludgeEnemy):
+                            enemy.reset_walking_animation()
 
             # Handle invincibility timer events
             elif (
@@ -194,6 +235,18 @@ def run_game() -> str:
 
         # Display player health on top right
         display_health(DISPLAYSURF, player)
+        
+        # Display walking animation debug info (optional - can be removed later)
+        font = pygame.font.Font(None, 24)
+        for enemy in enemies:
+            if isinstance(enemy, SludgeEnemy):
+                walking_info = enemy.get_walking_animation_info()
+                debug_text = f"Walking: {walking_info['current_walking_state']} | Moving: {walking_info['is_moving']}"
+                debug_surface = font.render(debug_text, True, WHITE)
+                debug_rect = debug_surface.get_rect()
+                debug_rect.topleft = (10, 10)
+                DISPLAYSURF.blit(debug_surface, debug_rect)
+                break  # Only show for first enemy
 
         if pygame.sprite.spritecollideany(player, enemies):
             current_time = pygame.time.get_ticks()
